@@ -46,5 +46,5 @@ from functools import reduce
 df_merged = reduce(lambda left, right: pd.merge(left, right, on=["x", "y"], how="outer"), dfs)
 
 # Save to CSV
-df_merged.to_csv("percent_tree_cover_all_years.csv", index=False)
+df_merged.to_csv("data/percent_tree_cover_all_years.csv", index=False)
 print(f"Saved percent_tree_cover_all_years.csv with {len(df_merged)} rows")

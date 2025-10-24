@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-df = pd.read_csv("percent_tree_cover_all_years.csv")
+df = pd.read_csv("data/percent_tree_cover_all_years.csv")
 df = df[(df["2000"] != 200) & (df["2000"] != 253)]
 
 bin_size = 10000
@@ -13,4 +13,4 @@ df_coarse = df.groupby(["x_bin", "y_bin"]).mean(numeric_only=True).reset_index()
 
 print(df_coarse.head())
 
-df_coarse.to_csv("course_data.csv")
+df_coarse.to_csv("data/course_data.csv")
