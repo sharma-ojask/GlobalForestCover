@@ -70,15 +70,25 @@ class AdaptiveAutoRegForecaster:
         else:
             prepped = train_series
 
-        if prepped.size <= 2:
+        # Modified: Increased minimum length to prevent degrees of freedom error (needs > 3 for minimal AR(1))
+        if prepped.size <= 3:
             raise ValueError("Training series too short after preparation for AR modeling")
 
         self._prepared_series = pd.Series(prepped)
-        self._max_lags = min(self._max_lags, (len(self._prepared_series)-1)//2)
+        
+        # Modified: Stricter cap to ensure degrees of freedom > 0. 
+        # Formula requirement: lags < (N - 1) / 2
+        safe_limit = (len(self._prepared_series) - 2) // 2
+        self._max_lags = min(self._max_lags, safe_limit)
+        
+        # If safe_limit is < 1 (e.g. length 3), default to 1 if possible or raise error. 
+        # Since we checked size <= 3 above, safe_limit is at least 1 (for size 4).
+        self._max_lags = max(1, self._max_lags)
 
         lag_order = self._lags if self._lags is not None else self._select_lags_via_pacf(prepped, self._max_lags)
-        # Ensure lag order does not exceed series length - 1
-        lag_order = int(max(1, min(lag_order, len(prepped) - 1)))
+        
+        # Ensure lag order does not exceed series length limits
+        lag_order = int(max(1, min(lag_order, self._max_lags)))
 
         self._model = AutoReg(self._prepared_series, lags=lag_order, old_names=False)
         self._results = self._model.fit()
