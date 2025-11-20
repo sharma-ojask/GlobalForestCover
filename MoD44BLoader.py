@@ -24,7 +24,7 @@ class MoD44BLoader:
         series = loader.get_time_series()
     """
 
-    def __init__(self, data_dir: str, sds_name: str) -> None:
+    def __init__(self, data_dir: str, sds_name: str, resolution: int = -1) -> None:
         self.data_dir: Path = Path(data_dir)
         self.sds_name: str = sds_name
 
@@ -36,6 +36,7 @@ class MoD44BLoader:
         self._file_paths: List[str] = [] #Sorted by acquisition date
         self._time_series: Optional[np.ndarray] = None
         self._dimensions: Optional[Tuple[int, int]] = None  # (height, width)
+        self.resolution: int = resolution
 
         # Build state on construction
         self._scan_and_parse()
@@ -243,11 +244,42 @@ class MoD44BLoader:
             data = sds_obj.get()
         finally:
             hdf_file.end()
+        
+        # Apply reduction if flag is set
+        if self.resolution != -1:
+            data = self._reduce_frame(data, self.resolution)
         return data
+    
+    def _reduce_frame(self, data: np.ndarray, target_dim: int) -> np.ndarray:
+        """
+        Reduces an image (H, W) to (target_dim, target_dim) by averaging blocks.
+        Assumes input dimensions are divisible by target_dim (e.g. 4800 / 100 = 48).
+        """
+        h, w = data.shape
+        
+        # Calculate block size (e.g., 48 if going from 4800 -> 100)
+        if h % target_dim != 0 or w % target_dim != 0:
+            raise ValueError(
+                f"Cannot reduce resolution: Input shape ({h}, {w}) "
+                f"is not divisible by target dimension ({target_dim})."
+            )
+            
+        block_h = h // target_dim
+        block_w = w // target_dim
+
+        # 1. Reshape to (Target_H, Block_H, Target_W, Block_W)
+        # 2. Take the mean over the block axes (1 and 3)
+        # 3. Cast back to original dtype (optional: remove astype if you want floats)
+        return (
+            data.reshape(target_dim, block_h, target_dim, block_w)
+            .mean(axis=(1, 3))
+            .astype(data.dtype)
+        )
 
     def _build_time_series(self) -> None:
         # Load first to determine dimensions
         first_data = self._load_data(self._file_paths[0])
+
         height, width = first_data.shape
         self._dimensions = (height, width)
 
