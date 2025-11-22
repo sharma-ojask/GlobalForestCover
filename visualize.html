@@ -1,184 +1,229 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Predict Forest Loss</title>
+  <meta charset="UTF-8">
+  <title>Predict Forest Loss</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-<style>
-  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f8f9fa; }
-  h1 { text-align:center; margin:20px 0; }
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f8f9fa;
+    }
 
-  #mapBox {
-    width: 90%;
-    max-width: 1200px;
-    height:700px;
-    margin:0 auto;
-    border:2px solid #ccc;
-    border-radius:10px;
-    overflow:hidden;
-  }
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+    }
 
-  .tabs { display:flex; margin-bottom:8px; margin-top:10px; }
-  .tab {
-    flex:1; text-align:center;
-    padding:8px; cursor:pointer;
-    background:#dcdcdc;
-    border-radius:4px 4px 0 0;
-    margin-right:3px;
-    font-weight:600;
-  }
-  .tab.active { background:white; }
+    #mapBox {
+      width: 90%;
+      max-width: 1200px;
+      height: 700px;
+      margin: 0 auto;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      overflow: hidden;
+    }
 
-  .tab-content { display:none; }
-  .tab-content.active { display:block; }
+    .tabs {
+      display: flex;
+      margin-bottom: 8px;
+      margin-top: 10px;
+    }
 
-  .plot-container {
-    width:100%;
-    height:520px;
-    margin-bottom:15px;
-  }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      cursor: pointer;
+      background: #dcdcdc;
+      border-radius: 4px 4px 0 0;
+      margin-right: 3px;
+      font-weight: 600;
+    }
 
-  .plot-container-small {
-    width:100%;
-    height:300px;
-    margin-bottom:10px;
-  }
+    .tab.active {
+      background: white;
+    }
 
-  .explanation-box {
-    margin-top:8px;
-    padding:14px;
-    background:#eef5ee;
-    border-radius:10px;
-    font-size:15px;
-    line-height:1.7;
-    margin-bottom:12px;
-    border-left: 5px solid #4CAF50;
-  }
+    .tab-content {
+      display: none;
+    }
 
-  .stats {
-    background:#f3f3f3;
-    padding:14px;
-    border-radius:10px;
-    white-space:pre-line;
-    font-size:15px;
-    line-height:1.6;
-  }
+    .tab-content.active {
+      display: block;
+    }
 
-  input[type=range] { width:100%; margin:8px 0; }
-  .hidden-slider { display:none !important; }
+    .plot-container {
+      width: 100%;
+      height: 520px;
+      margin-bottom: 15px;
+    }
 
-  /* Popup modal */
-  #customPopup {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 950px;
-    max-width: 95vw;
-    max-height: 90vh;
-    overflow-y: auto;
-    background: white;
-    border-radius: 12px;
-    padding: 22px 26px;
-    box-shadow: 0 0 25px rgba(0,0,0,0.35);
-    z-index: 9999;
-    display: none;
-  }
+    .plot-container-small {
+      width: 100%;
+      height: 300px;
+      margin-bottom: 10px;
+    }
 
-  #popupCloseBtn {
-    position: absolute;
-    top: 10px; right: 15px;
-    font-size: 20px;
-    cursor: pointer;
-  }
+    .explanation-box {
+      margin-top: 8px;
+      padding: 14px;
+      background: #eef5ee;
+      border-radius: 10px;
+      font-size: 15px;
+      line-height: 1.7;
+      margin-bottom: 12px;
+      border-left: 5px solid #4CAF50;
+    }
 
-  #popupContent h3 { margin-top:0; }
+    .stats {
+      background: #f3f3f3;
+      padding: 14px;
+      border-radius: 10px;
+      white-space: pre-line;
+      font-size: 15px;
+      line-height: 1.6;
+    }
 
-  .year-label-container {
-    width:100%;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    font-weight:600;
-    margin-top:4px;
-  }
+    input[type=range] {
+      width: 100%;
+      margin: 8px 0;
+    }
 
-  /* Audio button */
-  .speak-btn {
-    margin-top:8px;
-    padding:6px 10px;
-    border-radius:6px;
-    border:none;
-    background:#4CAF50;
-    color:white;
-    font-size:13px;
-    cursor:pointer;
-  }
-  .speak-btn:hover { background:#3b9140; }
+    .hidden-slider {
+      display: none !important;
+    }
 
-  /* Timelapse crossfade layers */
-  #timelapseContainer {
-    position:relative;
-    width:100%;
-    height:520px;
-  }
-  .fade-frame {
-    position:absolute;
-    top:0; left:0;
-    width:100%; height:100%;
-    opacity:0;
-    transition: opacity 1s ease;
-  }
-  .fade-frame.visible {
-    opacity:1;
-  }
+    /* Popup modal */
+    #customPopup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 950px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: white;
+      border-radius: 12px;
+      padding: 22px 26px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.35);
+      z-index: 9999;
+      display: none;
+    }
 
-  .pixel-list {
-    font-size: 13px;
-    margin-top: 8px;
-  }
+    #popupCloseBtn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      cursor: pointer;
+    }
 
-  .pixel-chip {
-    display:inline-flex;
-    align-items:center;
-    padding:2px 6px;
-    margin:2px;
-    border-radius:10px;
-    background:#e0e0e0;
-  }
-  .pixel-chip button {
-    margin-left:4px;
-    border:none;
-    background:transparent;
-    cursor:pointer;
-  }
-  .tip-text {
-    font-size: 12px;
-    color:#555;
-    margin-top:4px;
-  }
+    #popupContent h3 {
+      margin-top: 0;
+    }
 
-  .slider-box {
-  margin-bottom: 12px;
-}
-.tab-content .slider-box {
-  display: none;
-}
-.tab-content.active .slider-box {
-  display: block;
-}
+    .year-label-container {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      margin-top: 4px;
+    }
 
-</style>
+    /* Audio button */
+    .speak-btn {
+      margin-top: 8px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      background: #4CAF50;
+      color: white;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .speak-btn:hover {
+      background: #3b9140;
+    }
+
+    /* Timelapse crossfade layers */
+    #timelapseContainer {
+      position: relative;
+      width: 100%;
+      height: 520px;
+    }
+
+    .fade-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .fade-frame.visible {
+      opacity: 1;
+    }
+
+    .pixel-list {
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .pixel-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      margin: 2px;
+      border-radius: 10px;
+      background: #e0e0e0;
+    }
+
+    .pixel-chip button {
+      margin-left: 4px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .tip-text {
+      font-size: 12px;
+      color: #555;
+      margin-top: 4px;
+    }
+
+    .slider-box {
+      margin-bottom: 12px;
+    }
+
+    .tab-content .slider-box {
+      display: none;
+    }
+
+    .tab-content.active .slider-box {
+      display: block;
+    }
+  </style>
 </head>
 
 <body>
-<!-- ============================
+  <!-- ============================
      TUTORIAL / INTRO SECTION
 ============================= -->
-<div id="tutorialSection" style="
+  <div id="tutorialSection" style="
     width: 90%;
     max-width: 1200px;
     margin: 0 auto 25px auto;
@@ -188,159 +233,181 @@
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
 ">
 
-  <h2 style="margin-top:0; font-size:28px; color:#2d4b2d;">ForestLens</h2>
-  <p style="font-size:16px; line-height:1.6;">
-    A visual analytics tool for understanding forest change and predicting future loss.
-    <br><br>
-    This tool lets you explore forest change across the world using satellite-based tree-cover data.
-    You can view historical forest conditions, visualize long-term change, forecast future trends,
-    and examine individual pixels on a detailed grid. Use it to compare regions, understand
-    environmental patterns, and identify potential hotspots of deforestation or recovery.
-  </p>
+    <h2 style="margin-top:0; font-size:28px; color:#2d4b2d;">ForestLens</h2>
+    <p style="font-size:16px; line-height:1.6;">
+      A visual analytics tool for understanding forest change and predicting future loss.
+      <br><br>
+      This tool lets you explore forest change across the world using satellite-based tree-cover data.
+      You can view historical forest conditions, visualize long-term change, forecast future trends,
+      and examine individual pixels on a detailed grid. Use it to compare regions, understand
+      environmental patterns, and identify potential hotspots of deforestation or recovery.
+    </p>
 
-  <!-- Card Layout -->
-  <div style="
+    <!-- Card Layout -->
+    <div style="
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 15px;
       margin-top: 20px;
   ">
-    <div style="background:#f3f9f3; padding:15px; border-radius:10px; border-left:5px solid #4CAF50;">
-      <b>🌲 Heatmap</b><br>
-      Shows percent tree cover for the selected year. Move the slider to watch forest change.
+      <div style="background:#f3f9f3; padding:15px; border-radius:10px; border-left:5px solid #4CAF50;">
+        <b>🌲 Heatmap</b><br>
+        Shows percent tree cover for the selected year. Move the slider to watch forest change.
+      </div>
+
+      <div style="background:#f3f9f3; padding:15px; border-radius:10px; border-left:5px solid #4CAF50;">
+        <b>🕒 Timelapse</b><br>
+        Compare the earliest year, latest year, and the long-term difference to see gains and losses.
+      </div>
+
+      <div style="background:#f3f9f3; padding:15px; border-radius:10px; border-left:5px solid #4CAF50;">
+        <b>📈 Forecast</b><br>
+        Click pixels to see historical and predicted values. Compare up to three locations.
+      </div>
+
+      <div style="background:#f3f9f3; padding:15px; border-radius:10px; border-left:5px solid #4CAF50;">
+        <b>📊 Stats</b><br>
+        View mean, max, and variability of tree cover to quantify patterns you observe.
+      </div>
     </div>
 
-    <div style="background:#f3f9f3; padding:15px; border-radius:10px; border-left:5px solid #4CAF50;">
-      <b>🕒 Timelapse</b><br>
-      Compare the earliest year, latest year, and the long-term difference to see gains and losses.
-    </div>
-
-    <div style="background:#f3f9f3; padding:15px; border-radius:10px; border-left:5px solid #4CAF50;">
-      <b>📈 Forecast</b><br>
-      Click pixels to see historical and predicted values. Compare up to three locations.
-    </div>
-
-    <div style="background:#f3f9f3; padding:15px; border-radius:10px; border-left:5px solid #4CAF50;">
-      <b>📊 Stats</b><br>
-      View mean, max, and variability of tree cover to quantify patterns you observe.
-    </div>
+    <p style="font-size:16px; margin-top:20px; font-weight:600;">
+      Pick a tile anywhere on Earth to begin uncovering its forest story, one year at a time.
+    </p>
   </div>
 
-  <p style="font-size:16px; margin-top:20px; font-weight:600;">
-    Pick a tile anywhere on Earth to begin uncovering its forest story, one year at a time.
-  </p>
-</div>
+  <!-- Popup Modal -->
+  <div id="customPopup">
+    <div id="popupCloseBtn">✖</div>
+    <div id="popupContent"></div>
+  </div>
 
-<!-- Popup Modal -->
-<div id="customPopup">
-  <div id="popupCloseBtn">✖</div>
-  <div id="popupContent"></div>
-</div>
+  <div id="mapBox">
+    <div id="map" style="width:100%; height:100%;"></div>
+  </div>
 
-<div id="mapBox">
-  <div id="map" style="width:100%; height:100%;"></div>
-</div>
+  <script>
+    // =========================================
+    // MAP + TILE SETUP
+    // =========================================
+    let tiles = {};
+    const tileWidthDeg = 10; // one tile spans 10 degree longitude
+    const tileHeightDeg = 10; // one tile spans 10 degree latitude
 
-<script>
-// =========================================
-// MAP + TILE SETUP
-// =========================================
-let tiles = {};
-const tileWidthDeg = 10;
-const tileHeightDeg = 10;
+    const map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { maxZoom: 5, attribution: '&copy; OSM' }).addTo(map);
 
-const map = L.map('map').setView([0,0],2);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  { maxZoom:5, attribution:'&copy; OSM' }).addTo(map);
+    // fetch("processed_tiles_with_forecast.json")
+    //   .then(r => r.json())
+    //   .then(j => { tiles = j; drawTiles(Object.keys(tiles)); });
 
-fetch("data/processed_tiles_with_forecast.json")
-  .then(r=>r.json())
-  .then(j => { tiles = j; drawTiles(Object.keys(tiles)); });
+    fetch("tile_latlon.json")
+      .then(r => r.json())
+      .then(j => { tiles = j; drawTiles(Object.keys(tiles)); });
 
-function drawTiles(tileNames){
-  tileNames.forEach(name => {
-    const hv = name.match(/h(\d+)v(\d+)/);
-    if(!hv) return;
+    // =========================================
+    // TILE DRAWING
+    // =========================================
+    function drawTiles(tileNames) {
+      tileNames.forEach(name => {
+        const tile = tiles[name];
+        if (!tile || !tile.boundaries) return;
 
-    const h = parseInt(hv[1]);
-    const v = parseInt(hv[2]);
+        const b = tile.boundaries;
+        // Leaflet polygon: array of [lat, lon]
+        // Order: UL -> UR -> LR -> LL to form a closed loop
+        const corners = [
+          b.UL,
+          b.UR,
+          b.LR,
+          b.LL
+        ];
 
-    const lon_min = -180 + h * tileWidthDeg;
-    const lon_max = lon_min + tileWidthDeg;
-    const lat_max = 90 - v * tileHeightDeg;
-    const lat_min = lat_max - tileHeightDeg;
+        const poly = L.polygon(corners, {
+          color: "red", weight: 1, fillOpacity: 0.1
+        });
+        poly.addTo(map);
 
-    const rect = L.rectangle([[lat_min, lon_min],[lat_max, lon_max]], {
-      color:"red", weight:1
-    });
-    rect.addTo(map);
+        // Note: The popup logic (openTilePopup) requires the full data (years, etc.)
+        // which is currently not loaded if we only fetch tile_latlon.json.
+        // We keep the click handler, but it might error if 'tiles' doesn't have the data.
+        poly.on("click", () => {
+          if (tile.years) {
+            openTilePopup(name);
+          } else {
+            console.warn("Full tile data not loaded for popup.");
+            L.popup()
+              .setLatLng(b.UL)
+              .setContent(`<b>${name}</b><br>Lat/Lon data only.`)
+              .openOn(map);
+          }
+        });
+      });
+    }
 
-    rect.on("click", () => openTilePopup(name));
-  });
-}
+    // clamp helper to keep values in [0,100]
+    function clamp01(v) {
+      if (v === null || v === undefined || isNaN(v)) return null;
+      if (v < 0) return 0;
+      if (v > 100) return 100;
+      return v;
+    }
+    function getRegionFromCoords(lat, lon) {
+      // Africa
+      if (lat <= 37 && lat >= -35 && lon >= -20 && lon <= 55) return "Africa";
 
-// clamp helper to keep values in [0,100]
-function clamp01(v){
-  if (v === null || v === undefined || isNaN(v)) return null;
-  if (v < 0) return 0;
-  if (v > 100) return 100;
-  return v;
-}
-function getRegionFromCoords(lat, lon) {
-  // Africa
-  if (lat <= 37 && lat >= -35 && lon >= -20 && lon <= 55) return "Africa";
+      // Europe
+      if (lat >= 35 && lat <= 71 && lon >= -25 && lon <= 45) return "Europe";
 
-  // Europe
-  if (lat >= 35 && lat <= 71 && lon >= -25 && lon <= 45) return "Europe";
+      // Asia
+      if (lat >= 5 && lat <= 77 && lon >= 40 && lon <= 180) return "Asia";
 
-  // Asia
-  if (lat >= 5 && lat <= 77 && lon >= 40 && lon <= 180) return "Asia";
+      // Middle East (optional small override)
+      if (lat >= 12 && lat <= 40 && lon >= 30 && lon <= 60) return "The Middle East";
 
-  // Middle East (optional small override)
-  if (lat >= 12 && lat <= 40 && lon >= 30 && lon <= 60) return "The Middle East";
+      // North America
+      if (lat >= 7 && lat <= 83 && lon >= -170 && lon <= -50) return "North America";
 
-  // North America
-  if (lat >= 7 && lat <= 83 && lon >= -170 && lon <= -50) return "North America";
+      // South America
+      if (lat <= 13 && lat >= -56 && lon >= -82 && lon <= -34) return "South America";
 
-  // South America
-  if (lat <= 13 && lat >= -56 && lon >= -82 && lon <= -34) return "South America";
+      // Australia / Oceania
+      if (lat <= -10 && lat >= -50 && lon >= 110 && lon <= 180) return "Australia / Oceania";
 
-  // Australia / Oceania
-  if (lat <= -10 && lat >= -50 && lon >= 110 && lon <= 180) return "Australia / Oceania";
+      // Antarctica
+      if (lat < -60) return "Antarctica";
 
-  // Antarctica
-  if (lat < -60) return "Antarctica";
+      return "an unknown location";
+    }
 
-  return "an unknown location";
-}
+    // =========================================
+    // POPUP LOGIC
+    // =========================================
+    function openTilePopup(tileName) {
+      const tile = tiles[tileName];
+      // Compute tile center coordinates
+      const hv = tileName.match(/h(\d+)v(\d+)/);
+      const h = parseInt(hv[1]);
+      const v = parseInt(hv[2]);
 
-// =========================================
-// POPUP LOGIC
-// =========================================
-function openTilePopup(tileName){
-  const tile = tiles[tileName];
-  // Compute tile center coordinates
-const hv = tileName.match(/h(\d+)v(\d+)/);
-const h = parseInt(hv[1]);
-const v = parseInt(hv[2]);
+      const lon_min = -180 + h * 10;
+      const lon_max = lon_min + 10;
+      const lat_max = 90 - v * 10;
+      const lat_min = lat_max - 10;
 
-const lon_min = -180 + h * 10;
-const lon_max = lon_min + 10;
-const lat_max = 90 - v * 10;
-const lat_min = lat_max - 10;
+      const centerLat = (lat_min + lat_max) / 2;
+      const centerLon = (lon_min + lon_max) / 2;
 
-const centerLat = (lat_min + lat_max) / 2;
-const centerLon = (lon_min + lon_max) / 2;
+      // Predict continent / region
+      const region = getRegionFromCoords(centerLat, centerLon);
 
-// Predict continent / region
-const region = getRegionFromCoords(centerLat, centerLon);
+      if (!tile) return;
 
-  if(!tile) return;
+      const years = tile.years.map(Number);
+      const popupDiv = document.createElement("div");
 
-  const years = tile.years.map(Number);
-  const popupDiv = document.createElement("div");
-
-  const heatmapExplanation = `
+      const heatmapExplanation = `
 This heatmap shows percent tree cover for tile ${tileName}.
 Darker greens mean denser forest.
 Lighter greens show lower tree cover.
@@ -348,7 +415,7 @@ White areas represent little or no vegetation.
 Data is shown on a 100×100 grid derived from MODIS satellite imagery.
 `;
 
-  const timelapseExplanation = `
+      const timelapseExplanation = `
 This timelapse cycles through the first historical year, the last historical year,
 and the difference between them.
 Green increases show forest gain.
@@ -356,7 +423,7 @@ Red decreases show forest loss.
 Use the controls below to play, pause, or step through manually.
 `;
 
-const forecastExplanation = `
+      const forecastExplanation = `
 This forecast view lets you explore tree-cover trends for specific pixels.
 Click a pixel on the top heatmap to add it to the chart below (up to 3 pixels).
 Solid lines show historical and interpolated values.
@@ -364,7 +431,7 @@ Dashed lines show forecasted values.
 Use this tool to compare stable, recovering, or declining areas.
 `;
 
-const statsExplanation = `
+      const statsExplanation = `
 This statistics panel summarizes forest conditions for the selected year.
 Mean tree cover indicates overall canopy density.
 Maximum tree cover shows the healthiest surviving area.
@@ -373,13 +440,13 @@ Use these numbers to understand stability, resilience, or long-term degradation.
 `;
 
 
-  popupDiv.innerHTML = `
+      popupDiv.innerHTML = `
     <h3>🌍 Somewhere in ${region} <span style="font-size:14px; color:#888;">(${tileName})</span></h3>
 
     <div id="globalSliderBox" class="slider-box">
   <label><b>Year:</b></label>
   <input type="range" id="yearSlider"
-         min="${years[0]}" max="${years[years.length-1]}"
+         min="${years[0]}" max="${years[years.length - 1]}"
          value="${years[0]}"/>
 
   <div class="year-label-container">
@@ -514,378 +581,379 @@ Use these numbers to understand stability, resilience, or long-term degradation.
     </div>
   `;
 
-  // Attach popup
-  const popupContent = document.getElementById("popupContent");
-  popupContent.innerHTML = "";
-  popupContent.appendChild(popupDiv);
-  document.getElementById("customPopup").style.display = "block";
+      // Attach popup
+      const popupContent = document.getElementById("popupContent");
+      popupContent.innerHTML = "";
+      popupContent.appendChild(popupDiv);
+      document.getElementById("customPopup").style.display = "block";
 
- // ==========================
-// FIXED TAB LOGIC WITH 1 SHARED SLIDER
-// ==========================
-const tabs = popupDiv.querySelectorAll(".tab");
-const contents = popupDiv.querySelectorAll(".tab-content");
+      // ==========================
+      // FIXED TAB LOGIC WITH 1 SHARED SLIDER
+      // ==========================
+      const tabs = popupDiv.querySelectorAll(".tab");
+      const contents = popupDiv.querySelectorAll(".tab-content");
 
-// Get the single global slider-box
-const sliderBox = popupDiv.querySelector("#globalSliderBox");
-const slider = sliderBox.querySelector("#yearSlider");
-const yearLabel = sliderBox.querySelector("#yearLabel");
+      // Get the single global slider-box
+      const sliderBox = popupDiv.querySelector("#globalSliderBox");
+      const slider = sliderBox.querySelector("#yearSlider");
+      const yearLabel = sliderBox.querySelector("#yearLabel");
 
-// Move slider-box into the active tab
-function moveSliderTo(tabId) {
-  const activeTab = popupDiv.querySelector("#" + tabId);
-  // insert right after explanation-box
-  activeTab.insertBefore(sliderBox, activeTab.children[1]);
-}
+      // Move slider-box into the active tab
+      function moveSliderTo(tabId) {
+        const activeTab = popupDiv.querySelector("#" + tabId);
+        // insert right after explanation-box
+        activeTab.insertBefore(sliderBox, activeTab.children[1]);
+      }
 
-tabs.forEach(tab => {
-  tab.addEventListener("click", () => {
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
 
-    // activate tab
-    tabs.forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
+          // activate tab
+          tabs.forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
 
-    // show tab content
-    contents.forEach(c => c.classList.remove("active"));
-    const tabId = tab.dataset.tab;
-    popupDiv.querySelector("#" + tabId).classList.add("active");
+          // show tab content
+          contents.forEach(c => c.classList.remove("active"));
+          const tabId = tab.dataset.tab;
+          popupDiv.querySelector("#" + tabId).classList.add("active");
 
-    // slider visible in all tabs except timelapse
-    if (tabId !== "changeTab") {
-      sliderBox.style.display = "block";
-      moveSliderTo(tabId);
-    } else {
-      sliderBox.style.display = "none";
-    }
+          // slider visible in all tabs except timelapse
+          if (tabId !== "changeTab") {
+            sliderBox.style.display = "block";
+            moveSliderTo(tabId);
+          } else {
+            sliderBox.style.display = "none";
+          }
 
-    // stop audio
-    if ("speechSynthesis" in window) speechSynthesis.cancel();
+          // stop audio
+          if ("speechSynthesis" in window) speechSynthesis.cancel();
 
-    updatePopup();
-  });
-});
+          updatePopup();
+        });
+      });
 
-// Default: slider goes in heatmap tab
-moveSliderTo("heatmapTab");
+      // Default: slider goes in heatmap tab
+      moveSliderTo("heatmapTab");
 
-  // =====================================================
-  // AUDIO BUTTON LOGIC (heatmap + timelapse explanations)
-  // =====================================================
-  function speakText(text){
-    if (!("speechSynthesis" in window)) return;
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    const voices = speechSynthesis.getVoices();
-    const female = voices.find(v =>
-      /female|zira|susan|samantha|serena|karen/i.test(v.name)
-    );
-    if (female) u.voice = female;
-    u.rate = 1.05;
-    u.pitch = 1.1;
-    speechSynthesis.speak(u);
-  }
+      // =====================================================
+      // AUDIO BUTTON LOGIC (heatmap + timelapse explanations)
+      // =====================================================
+      function speakText(text) {
+        if (!("speechSynthesis" in window)) return;
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        const voices = speechSynthesis.getVoices();
+        const female = voices.find(v =>
+          /female|zira|susan|samantha|serena|karen/i.test(v.name)
+        );
+        if (female) u.voice = female;
+        u.rate = 1.05;
+        u.pitch = 1.1;
+        speechSynthesis.speak(u);
+      }
 
-  document.getElementById("playHeatmapAudio").onclick = ()=> speakText(heatmapExplanation);
-  document.getElementById("pauseHeatmapAudio").onclick = ()=> { if ("speechSynthesis" in window) speechSynthesis.cancel(); };
+      document.getElementById("playHeatmapAudio").onclick = () => speakText(heatmapExplanation);
+      document.getElementById("pauseHeatmapAudio").onclick = () => { if ("speechSynthesis" in window) speechSynthesis.cancel(); };
 
-  document.getElementById("playTimelineAudio").onclick = ()=> speakText(timelapseExplanation);
-  document.getElementById("pauseTimelineAudio").onclick = ()=> { if ("speechSynthesis" in window) speechSynthesis.cancel(); };
-  // FORECAST AUDIO
-document.getElementById("playForecastAudio").onclick = () =>
-    speakText(forecastExplanation);
-document.getElementById("pauseForecastAudio").onclick = () => {
-    if ("speechSynthesis" in window) speechSynthesis.cancel();
-};
+      document.getElementById("playTimelineAudio").onclick = () => speakText(timelapseExplanation);
+      document.getElementById("pauseTimelineAudio").onclick = () => { if ("speechSynthesis" in window) speechSynthesis.cancel(); };
+      // FORECAST AUDIO
+      document.getElementById("playForecastAudio").onclick = () =>
+        speakText(forecastExplanation);
+      document.getElementById("pauseForecastAudio").onclick = () => {
+        if ("speechSynthesis" in window) speechSynthesis.cancel();
+      };
 
-// STATS AUDIO
-document.getElementById("playStatsAudio").onclick = () =>
-    speakText(statsExplanation);
-document.getElementById("pauseStatsAudio").onclick = () => {
-    if ("speechSynthesis" in window) speechSynthesis.cancel();
-};
+      // STATS AUDIO
+      document.getElementById("playStatsAudio").onclick = () =>
+        speakText(statsExplanation);
+      document.getElementById("pauseStatsAudio").onclick = () => {
+        if ("speechSynthesis" in window) speechSynthesis.cancel();
+      };
 
-  // =======================
-  //   TIME-LAPSE SETUP (ONCE)
-  // =======================
-  const histIndices = tile.mask
-    .map((m,i)=>({i,has:m.flat().includes(1)}))
-    .filter(o=>o.has)
-    .map(o=>o.i);
+      // =======================
+      //   TIME-LAPSE SETUP (ONCE)
+      // =======================
+      const histIndices = tile.mask
+        .map((m, i) => ({ i, has: m.flat().includes(1) }))
+        .filter(o => o.has)
+        .map(o => o.i);
 
-  const start = tile.data[histIndices[0]];
-  const end   = tile.data[histIndices[histIndices.length-1]];
-  const diff  = start.map((row,i)=> row.map((v,j)=> clamp01(end[i][j] - v)));
+      const start = tile.data[histIndices[0]];
+      const end = tile.data[histIndices[histIndices.length - 1]];
+      const diff = start.map((row, i) => row.map((v, j) => clamp01(end[i][j] - v)));
 
-  const framesTL = [
-    {name:`Start (${years[histIndices[0]]})`,   z:start, colorscale:"Greens"},
-    {name:`End (${years[histIndices[histIndices.length-1]]})`, z:end,   colorscale:"Greens"},
-    {name:`Difference`,                          z:diff,  colorscale:"RdBu"}
-  ];
+      const framesTL = [
+        { name: `Start (${years[histIndices[0]]})`, z: start, colorscale: "Greens" },
+        { name: `End (${years[histIndices[histIndices.length - 1]]})`, z: end, colorscale: "Greens" },
+        { name: `Difference`, z: diff, colorscale: "RdBu" }
+      ];
 
-  const tlEls = [
-    document.getElementById("tlFrame1"),
-    document.getElementById("tlFrame2"),
-    document.getElementById("tlFrame3")
-  ];
+      const tlEls = [
+        document.getElementById("tlFrame1"),
+        document.getElementById("tlFrame2"),
+        document.getElementById("tlFrame3")
+      ];
 
-  framesTL.forEach((f,i)=>{
-    Plotly.newPlot(tlEls[i], [{
-      z: f.z,
-      type:"heatmap",
-      colorscale:f.colorscale
-    }],
-    {
-      height:520,
-      margin:{t:40,l:40,r:40,b:40},
-      xaxis:{scaleanchor:"y"},
-      yaxis:{autorange:"reversed"}
-    });
-  });
+      framesTL.forEach((f, i) => {
+        Plotly.newPlot(tlEls[i], [{
+          z: f.z,
+          type: "heatmap",
+          colorscale: f.colorscale
+        }],
+          {
+            height: 520,
+            margin: { t: 40, l: 40, r: 40, b: 40 },
+            xaxis: { scaleanchor: "y" },
+            yaxis: { autorange: "reversed" }
+          });
+      });
 
-  let tlIndex = 0;
-  let tlTimer = null;
-  const tlStatus = document.getElementById("tlStatus");
-  const tlPlayBtn = document.getElementById("tlPlayBtn");
+      let tlIndex = 0;
+      let tlTimer = null;
+      const tlStatus = document.getElementById("tlStatus");
+      const tlPlayBtn = document.getElementById("tlPlayBtn");
 
-  function showFrame(i){
-    tlEls.forEach((el,j)=> {
-      el.classList.toggle("visible", i===j);
-    });
-    tlStatus.textContent = framesTL[i].name;
-  }
+      function showFrame(i) {
+        tlEls.forEach((el, j) => {
+          el.classList.toggle("visible", i === j);
+        });
+        tlStatus.textContent = framesTL[i].name;
+      }
 
-  function nextFrame(){
-    tlIndex = (tlIndex+1)%framesTL.length;
-    showFrame(tlIndex);
-  }
+      function nextFrame() {
+        tlIndex = (tlIndex + 1) % framesTL.length;
+        showFrame(tlIndex);
+      }
 
-  function prevFrame(){
-    tlIndex = (tlIndex-1+framesTL.length)%framesTL.length;
-    showFrame(tlIndex);
-  }
+      function prevFrame() {
+        tlIndex = (tlIndex - 1 + framesTL.length) % framesTL.length;
+        showFrame(tlIndex);
+      }
 
-  function togglePlay(){
-    if (tlTimer){
-      clearInterval(tlTimer);
-      tlTimer = null;
-      tlPlayBtn.textContent = "▶ Play";
-    } else {
-      tlTimer = setInterval(nextFrame, 2000); // 2 sec per frame
-      tlPlayBtn.textContent = "⏸ Pause";
-    }
-  }
-
-  document.getElementById("tlPrevBtn").onclick = prevFrame;
-  document.getElementById("tlNextBtn").onclick = nextFrame;
-  tlPlayBtn.onclick = togglePlay;
-  showFrame(0);
-
-  // =======================
-  // FORECAST: pixel selection
-  // =======================
-  let selectedPixels = []; // {r, c}
-  const maxPixels = 3;
-
-  function addPixel(r,c){
-    // avoid duplicates
-    if (selectedPixels.some(p => p.r === r && p.c === c)) return;
-    if (selectedPixels.length >= maxPixels){
-      selectedPixels.shift(); // drop oldest
-    }
-    selectedPixels.push({r,c});
-    renderPixelList();
-    updateForecastChart();
-  }
-
-  function removePixel(r,c){
-    selectedPixels = selectedPixels.filter(p => !(p.r === r && p.c === c));
-    renderPixelList();
-    updateForecastChart();
-  }
-
-  function renderPixelList(){
-    const listDiv = document.getElementById("pixelList");
-    if (!listDiv) return;
-
-    if (selectedPixels.length === 0){
-      listDiv.innerHTML = "Selected pixels (row, column): none yet.";
-      return;
-    }
-
-    let html = "Selected pixels (row, column): ";
-    selectedPixels.forEach(p => {
-      html += `<span class="pixel-chip">(${p.r}, ${p.c}) <button data-r="${p.r}" data-c="${p.c}">✕</button></span>`;
-    });
-    listDiv.innerHTML = html;
-
-    // wire up remove buttons
-    listDiv.querySelectorAll("button").forEach(btn=>{
-      const r = parseInt(btn.getAttribute("data-r"));
-      const c = parseInt(btn.getAttribute("data-c"));
-      btn.onclick = ()=> removePixel(r,c);
-    });
-  }
-
-  function updateForecastChart(){
-    const chartDiv = document.getElementById("forecastChart");
-    if (!chartDiv) return;
-
-    if (selectedPixels.length === 0){
-      chartDiv.innerHTML = "";
-      return;
-    }
-
-    const traces = [];
-
-    selectedPixels.forEach((p,idx)=>{
-      const r = p.r;
-      const c = p.c;
-
-      const histY = [];
-      const fcY   = [];
-
-      for (let i=0;i<years.length;i++){
-        const vRaw = tile.data[i][r][c];
-        const m = tile.mask[i][r][c];
-        const v = clamp01(vRaw);
-
-        if (m === 3){ // forecast
-          histY.push(null);
-          fcY.push(v);
+      function togglePlay() {
+        if (tlTimer) {
+          clearInterval(tlTimer);
+          tlTimer = null;
+          tlPlayBtn.textContent = "▶ Play";
         } else {
-          // historical + interpolated
-          histY.push(v);
-          fcY.push(null);
+          tlTimer = setInterval(nextFrame, 2000); // 2 sec per frame
+          tlPlayBtn.textContent = "⏸ Pause";
         }
       }
 
-      traces.push({
-        x: years,
-        y: histY,
-        mode: "lines+markers",
-        name: `(${r}, ${c}) – Historical`,
-        line: {dash:"solid"}
-      });
+      document.getElementById("tlPrevBtn").onclick = prevFrame;
+      document.getElementById("tlNextBtn").onclick = nextFrame;
+      tlPlayBtn.onclick = togglePlay;
+      showFrame(0);
 
-      traces.push({
-        x: years,
-        y: fcY,
-        mode: "lines+markers",
-        name: `(${r}, ${c}) – Forecast`,
-        line: {dash:"dot"}
-      });
-    });
+      // =======================
+      // FORECAST: pixel selection
+      // =======================
+      let selectedPixels = []; // {r, c}
+      const maxPixels = 3;
 
-    Plotly.newPlot(chartDiv, traces, {
-      height:300,
-      margin:{t:40,l:60,r:20,b:50},
-      yaxis:{title:"Tree Cover (%)"},
-      xaxis:{title:"Year"}
-    });
-  }
+      function addPixel(r, c) {
+        // avoid duplicates
+        if (selectedPixels.some(p => p.r === r && p.c === c)) return;
+        if (selectedPixels.length >= maxPixels) {
+          selectedPixels.shift(); // drop oldest
+        }
+        selectedPixels.push({ r, c });
+        renderPixelList();
+        updateForecastChart();
+      }
 
-  function drawForecastHeatmap(frame){
-    const fhDiv = document.getElementById("forecastHeatmap");
-    if (!fhDiv) return;
+      function removePixel(r, c) {
+        selectedPixels = selectedPixels.filter(p => !(p.r === r && p.c === c));
+        renderPixelList();
+        updateForecastChart();
+      }
 
-    Plotly.newPlot(fhDiv, [{
-      z: frame,
-      type:"heatmap",
-      colorscale:"Greens",
-      zmin:0,
-      zmax:100
-    }],
-    {
-      height:300,
-      margin:{t:30,l:40,r:40,b:40},
-      xaxis:{scaleanchor:"y"},
-      yaxis:{autorange:"reversed"}
-    }).then(gd => {
-      gd.on("plotly_click", function(ev){
-        if (!ev.points || !ev.points.length) return;
-        const pt = ev.points[0];
-        // For a heatmap, point indexes are i (row), j (col)
-        const r = pt.y; // row index
-        const c = pt.x; // column index
-        addPixel(r,c);
-      });
-    });
-  }
+      function renderPixelList() {
+        const listDiv = document.getElementById("pixelList");
+        if (!listDiv) return;
 
-  // =========================================
-  // MAIN UPDATE FUNCTION — HEATMAP, FORECAST, STATS
-  // =========================================
-  function updatePopup(){
-    const yr = Number(slider.value);
-    yearLabel.textContent = yr;
+        if (selectedPixels.length === 0) {
+          listDiv.innerHTML = "Selected pixels (row, column): none yet.";
+          return;
+        }
 
-    const idx = years.findIndex(y => y === yr);
-    if (idx === -1) {
-      console.warn("Year not found in years array:", yr, years);
-      return;
-    }
+        let html = "Selected pixels (row, column): ";
+        selectedPixels.forEach(p => {
+          html += `<span class="pixel-chip">(${p.r}, ${p.c}) <button data-r="${p.r}" data-c="${p.c}">✕</button></span>`;
+        });
+        listDiv.innerHTML = html;
 
-    const frameRaw = tile.data[idx];
-    const frame = frameRaw.map(row => row.map(clamp01));
+        // wire up remove buttons
+        listDiv.querySelectorAll("button").forEach(btn => {
+          const r = parseInt(btn.getAttribute("data-r"));
+          const c = parseInt(btn.getAttribute("data-c"));
+          btn.onclick = () => removePixel(r, c);
+        });
+      }
 
-    const maskFlat = tile.mask[idx].flat();
-    let state = "Interpolated";
-    if (maskFlat.includes(1)) state = "Historical";
-    if (maskFlat.includes(3)) state = "Predicted";
+      function updateForecastChart() {
+        const chartDiv = document.getElementById("forecastChart");
+        if (!chartDiv) return;
 
-    // ---------------- HEATMAP TAB ----------------
-    Plotly.newPlot("heatmapDiv",
-      [{
-        z: frame,
-        type:"heatmap",
-        colorscale:"Greens",
-        zmin:0,
-        zmax:100
-      }],
-      {
-        height:520,
-        margin:{t:50,l:50,r:50,b:50},
-        xaxis:{scaleanchor:"y"},
-        yaxis:{autorange:"reversed"}
-      });
+        if (selectedPixels.length === 0) {
+          chartDiv.innerHTML = "";
+          return;
+        }
 
-    // ---------------- FORECAST HEATMAP ----------------
-    drawForecastHeatmap(frame);
+        const traces = [];
 
-    // ---------------- STATS ----------------
-    const valid = frame.flat().filter(v=>v !== null && !isNaN(v));
-    const mean = valid.reduce((a,b)=>a+b,0)/valid.length;
-    const max  = Math.max(...valid);
-    const std  = Math.sqrt(valid.map(v=>(v-mean)**2).reduce((a,b)=>a+b,0)/valid.length);
+        selectedPixels.forEach((p, idx) => {
+          const r = p.r;
+          const c = p.c;
 
-    document.getElementById("statsDiv").innerText =
-`📍 Tile: ${tileName}
+          const histY = [];
+          const fcY = [];
+
+          for (let i = 0; i < years.length; i++) {
+            const vRaw = tile.data[i][r][c];
+            const m = tile.mask[i][r][c];
+            const v = clamp01(vRaw);
+
+            if (m === 3) { // forecast
+              histY.push(null);
+              fcY.push(v);
+            } else {
+              // historical + interpolated
+              histY.push(v);
+              fcY.push(null);
+            }
+          }
+
+          traces.push({
+            x: years,
+            y: histY,
+            mode: "lines+markers",
+            name: `(${r}, ${c}) – Historical`,
+            line: { dash: "solid" }
+          });
+
+          traces.push({
+            x: years,
+            y: fcY,
+            mode: "lines+markers",
+            name: `(${r}, ${c}) – Forecast`,
+            line: { dash: "dot" }
+          });
+        });
+
+        Plotly.newPlot(chartDiv, traces, {
+          height: 300,
+          margin: { t: 40, l: 60, r: 20, b: 50 },
+          yaxis: { title: "Tree Cover (%)" },
+          xaxis: { title: "Year" }
+        });
+      }
+
+      function drawForecastHeatmap(frame) {
+        const fhDiv = document.getElementById("forecastHeatmap");
+        if (!fhDiv) return;
+
+        Plotly.newPlot(fhDiv, [{
+          z: frame,
+          type: "heatmap",
+          colorscale: "Greens",
+          zmin: 0,
+          zmax: 100
+        }],
+          {
+            height: 300,
+            margin: { t: 30, l: 40, r: 40, b: 40 },
+            xaxis: { scaleanchor: "y" },
+            yaxis: { autorange: "reversed" }
+          }).then(gd => {
+            gd.on("plotly_click", function (ev) {
+              if (!ev.points || !ev.points.length) return;
+              const pt = ev.points[0];
+              // For a heatmap, point indexes are i (row), j (col)
+              const r = pt.y; // row index
+              const c = pt.x; // column index
+              addPixel(r, c);
+            });
+          });
+      }
+
+      // =========================================
+      // MAIN UPDATE FUNCTION — HEATMAP, FORECAST, STATS
+      // =========================================
+      function updatePopup() {
+        const yr = Number(slider.value);
+        yearLabel.textContent = yr;
+
+        const idx = years.findIndex(y => y === yr);
+        if (idx === -1) {
+          console.warn("Year not found in years array:", yr, years);
+          return;
+        }
+
+        const frameRaw = tile.data[idx];
+        const frame = frameRaw.map(row => row.map(clamp01));
+
+        const maskFlat = tile.mask[idx].flat();
+        let state = "Interpolated";
+        if (maskFlat.includes(1)) state = "Historical";
+        if (maskFlat.includes(3)) state = "Predicted";
+
+        // ---------------- HEATMAP TAB ----------------
+        Plotly.newPlot("heatmapDiv",
+          [{
+            z: frame,
+            type: "heatmap",
+            colorscale: "Greens",
+            zmin: 0,
+            zmax: 100
+          }],
+          {
+            height: 520,
+            margin: { t: 50, l: 50, r: 50, b: 50 },
+            xaxis: { scaleanchor: "y" },
+            yaxis: { autorange: "reversed" }
+          });
+
+        // ---------------- FORECAST HEATMAP ----------------
+        drawForecastHeatmap(frame);
+
+        // ---------------- STATS ----------------
+        const valid = frame.flat().filter(v => v !== null && !isNaN(v));
+        const mean = valid.reduce((a, b) => a + b, 0) / valid.length;
+        const max = Math.max(...valid);
+        const std = Math.sqrt(valid.map(v => (v - mean) ** 2).reduce((a, b) => a + b, 0) / valid.length);
+
+        document.getElementById("statsDiv").innerText =
+          `📍 Tile: ${tileName}
 📅 Year: ${yr}
 🔎 State: ${state}
 
 🌿 Mean Tree Cover: ${mean.toFixed(1)}%
 📈 Max Tree Cover:  ${max.toFixed(1)}%
 📉 Std Dev:         ${std.toFixed(1)}%`;
-  }
+      }
 
-  // initial pixel defaults: pick three spread-out pixels
-  selectedPixels = [
-    {r:25, c:25},
-    {r:50, c:50},
-    {r:75, c:75}
-  ];
-  renderPixelList();
+      // initial pixel defaults: pick three spread-out pixels
+      selectedPixels = [
+        { r: 25, c: 25 },
+        { r: 50, c: 50 },
+        { r: 75, c: 75 }
+      ];
+      renderPixelList();
 
-  slider.oninput = updatePopup;
-  updatePopup();       // draw initial heatmaps + stats
-  updateForecastChart(); // draw initial multi-pixel chart
-}
+      slider.oninput = updatePopup;
+      updatePopup();       // draw initial heatmaps + stats
+      updateForecastChart(); // draw initial multi-pixel chart
+    }
 
-// Close popup
-document.getElementById("popupCloseBtn").onclick = () => {
-  document.getElementById("customPopup").style.display = "none";
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
-};
-</script>
+    // Close popup
+    document.getElementById("popupCloseBtn").onclick = () => {
+      document.getElementById("customPopup").style.display = "none";
+      if ("speechSynthesis" in window) speechSynthesis.cancel();
+    };
+  </script>
 </body>
+
 </html>
