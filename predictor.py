@@ -1,8 +1,37 @@
 import argparse
 import numpy as np
+import pandas as pd
 from pathlib import Path
 from AdaptiveAutoRegForecaster import AdaptiveAutoRegForecaster
+from prophet_forecaster import AdaptiveProphetForecaster
 from MoD44BLoader import MoD44BLoader
+
+def forecast_auto_regressive(pixel_ts_data, n_years, dataloader=None):
+    # Fit model
+    forecaster = AdaptiveAutoRegForecaster()
+    forecaster.fit(pixel_ts_data)
+
+    # Forecast
+    pred_diff = forecaster.forecast(steps=n_years)
+    
+    # Invert differencing
+    predicted = forecaster.invert_difference(
+        pred_diff, 
+        last_observed_value=pixel_ts_data[-1]
+    )
+
+    return predicted
+
+def forecast_prophet(pixel_ts_data, n_years, dataloader):
+    dates = pd.DatetimeIndex(dataloader.get_time_datetimes())
+    prophet_forecaster = AdaptiveProphetForecaster(
+    seasonality_mode='additive',
+    yearly_seasonality=False,  # Disable for annual data
+        changepoint_prior_scale=0.05
+    )
+    prophet_forecaster.fit(pixel_ts_data, dates=dates)
+    forecast_vals = prophet_forecaster.forecast(steps=n_years, freq='YS')
+    return forecast_vals
 
 def main():
     # 1. Setup Argument Parser
@@ -42,6 +71,12 @@ def main():
         type=int, 
         default=3, 
         help="Number of time steps to forecast."
+    )
+    parser.add_argument(
+        "--model", 
+        type=str, 
+        default='Autoregressive', 
+        help="Type of model used for forecasting. Can be one of 'Autoregressive' or 'Prophet'"
     )
 
     args = parser.parse_args()
@@ -85,18 +120,11 @@ def main():
                 forecast_results[:, i, j] = np.full((args.steps,), pixel_ts_data[0], dtype=np.float32)
                 continue
 
-            # Fit model
-            forecaster = AdaptiveAutoRegForecaster()
-            forecaster.fit(pixel_ts_data)
-
-            # Forecast
-            pred_diff = forecaster.forecast(steps=args.steps)
-            
-            # Invert differencing
-            predicted = forecaster.invert_difference(
-                pred_diff, 
-                last_observed_value=pixel_ts_data[-1]
-            )
+            # Get predictions
+            if args.model=='Autoregressive':
+                predicted = forecast_auto_regressive(pixel_ts_data, args.steps, loader)
+            elif args.model == 'Prophet':
+                predicted = forecast_prophet(pixel_ts_data, args.steps, loader)
 
             # Store results
             forecast_results[:, i, j] = predicted[:]
@@ -114,4 +142,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # Example: Run as python predictor.py --input_dir "../project/data/h17v07/" --output_path "../project/data/h17v07/3f.npy"
+    # Example: Run as python predictor.py --input_dir "../project/data/h17v07/" --output_path "../project/data/h17v07/3f.npy" --model "Autoregressive"
