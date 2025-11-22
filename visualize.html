@@ -617,9 +617,9 @@ document.getElementById("pauseStatsAudio").onclick = () => {
   const diff  = start.map((row,i)=> row.map((v,j)=> clamp01(end[i][j] - v)));
 
   const framesTL = [
-    {name:`Start (${years[histIndices[0]]})`,   z:start, colorscale:"Greens"},
-    {name:`End (${years[histIndices[histIndices.length-1]]})`, z:end,   colorscale:"Greens"},
-    {name:`Difference`,                          z:diff,  colorscale:"RdBu"}
+    {name:`Start (${years[histIndices[0]]})`,   z:start, colorscale:"Greens", reversescale: true},
+    {name:`End (${years[histIndices[histIndices.length-1]]})`, z:end,   colorscale:"Greens", reversescale: true},
+    {name:`Difference`,                          z:diff,  colorscale:"Reds"}
   ];
 
   const tlEls = [
@@ -794,6 +794,7 @@ document.getElementById("pauseStatsAudio").onclick = () => {
       z: frame,
       type:"heatmap",
       colorscale:"Greens",
+      reversescale: true,
       zmin:0,
       zmax:100
     }],
@@ -841,6 +842,7 @@ document.getElementById("pauseStatsAudio").onclick = () => {
         z: frame,
         type:"heatmap",
         colorscale:"Greens",
+        reversescale: true,
         zmin:0,
         zmax:100
       }],
