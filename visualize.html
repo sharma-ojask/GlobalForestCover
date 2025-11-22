@@ -617,8 +617,8 @@ document.getElementById("pauseStatsAudio").onclick = () => {
   const diff  = start.map((row,i)=> row.map((v,j)=> clamp01(end[i][j] - v)));
 
   const framesTL = [
-    {name:`Start (${years[histIndices[0]]})`,   z:start, colorscale:"Greens", reversescale: true},
-    {name:`End (${years[histIndices[histIndices.length-1]]})`, z:end,   colorscale:"Greens", reversescale: true},
+    {name:`Start (${years[histIndices[0]]})`,   z:start, colorscale:"Greens"},
+    {name:`End (${years[histIndices[histIndices.length-1]]})`, z:end,   colorscale:"Greens"},
     {name:`Difference`,                          z:diff,  colorscale:"Reds"}
   ];
 
@@ -632,7 +632,8 @@ document.getElementById("pauseStatsAudio").onclick = () => {
     Plotly.newPlot(tlEls[i], [{
       z: f.z,
       type:"heatmap",
-      colorscale:f.colorscale
+      colorscale:f.colorscale,
+      reversescale: f.colorscale == "Greens" ? true : false
     }],
     {
       height:520,
