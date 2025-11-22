@@ -253,7 +253,7 @@ const map = L.map('map').setView([0,0],2);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   { maxZoom:5, attribution:'&copy; OSM' }).addTo(map);
 
-fetch("data/processed_tiles_with_forecast.json")
+fetch("processed_tiles_with_forecast.json")
   .then(r=>r.json())
   .then(j => { tiles = j; drawTiles(Object.keys(tiles)); });
 
@@ -736,10 +736,12 @@ document.getElementById("pauseStatsAudio").onclick = () => {
     }
 
     const traces = [];
+    const colors = ["#1f77b4", "#2ca02c", "#9467bd", "#8c564b"];
 
     selectedPixels.forEach((p,idx)=>{
       const r = p.r;
       const c = p.c;
+      const color = colors[idx % colors.length];
 
       const histY = [];
       const fcY   = [];
@@ -764,7 +766,7 @@ document.getElementById("pauseStatsAudio").onclick = () => {
         y: histY,
         mode: "lines+markers",
         name: `(${r}, ${c}) – Historical`,
-        line: {dash:"solid"}
+        line: {dash:"solid", color: color}
       });
 
       traces.push({
@@ -772,7 +774,7 @@ document.getElementById("pauseStatsAudio").onclick = () => {
         y: fcY,
         mode: "lines+markers",
         name: `(${r}, ${c}) – Forecast`,
-        line: {dash:"dot"}
+        line: {dash:"dot", color: color}
       });
     });
 
