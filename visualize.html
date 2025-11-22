@@ -253,7 +253,7 @@ const map = L.map('map').setView([0,0],2);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   { maxZoom:5, attribution:'&copy; OSM' }).addTo(map);
 
-fetch("processed_tiles_with_forecast.json")
+fetch("data/processed_tiles_with_forecast.json")
   .then(r=>r.json())
   .then(j => { tiles = j; drawTiles(Object.keys(tiles)); });
 
