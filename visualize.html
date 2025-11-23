@@ -291,20 +291,28 @@
     // MAP + TILE SETUP
     // =========================================
     let tiles = {};
-    const tileWidthDeg = 10; // one tile spans 10 degree longitude
-    const tileHeightDeg = 10; // one tile spans 10 degree latitude
+    //const tileWidthDeg = 10; // one tile spans 10 degree longitude
+    //const tileHeightDeg = 10; // one tile spans 10 degree latitude
 
     const map = L.map('map').setView([0, 0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       { maxZoom: 5, attribution: '&copy; OSM' }).addTo(map);
 
-    // fetch("processed_tiles_with_forecast.json")
-    //   .then(r => r.json())
-    //   .then(j => { tiles = j; drawTiles(Object.keys(tiles)); });
+    Promise.all([
+      fetch("data/processed_tiles_with_forecast.json").then(r => r.json()),
+      fetch("tile_latlon.json").then(r => r.json())
+    ]).then(([forecastData, latlonData]) => {
+      tiles = forecastData;
 
-    fetch("tile_latlon.json")
-      .then(r => r.json())
-      .then(j => { tiles = j; drawTiles(Object.keys(tiles)); });
+      // Merge boundaries into the main tiles object
+      Object.keys(tiles).forEach(key => {
+        if (latlonData[key] && latlonData[key].boundaries) {
+          tiles[key].boundaries = latlonData[key].boundaries;
+        }
+      });
+
+      drawTiles(Object.keys(tiles));
+    });
 
     // =========================================
     // TILE DRAWING
