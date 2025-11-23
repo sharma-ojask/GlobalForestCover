@@ -686,7 +686,7 @@ Use these numbers to understand stability, resilience, or long-term degradation.
       const framesTL = [
         { name: `Start (${years[histIndices[0]]})`, z: start, colorscale: "Greens" },
         { name: `End (${years[histIndices[histIndices.length - 1]]})`, z: end, colorscale: "Greens" },
-        { name: `Difference`, z: diff, colorscale: "RdBu" }
+        { name: `Difference`, z: diff, colorscale: "Reds" }
       ];
 
       const tlEls = [
@@ -699,7 +699,8 @@ Use these numbers to understand stability, resilience, or long-term degradation.
         Plotly.newPlot(tlEls[i], [{
           z: f.z,
           type: "heatmap",
-          colorscale: f.colorscale
+          colorscale: f.colorscale,
+          reversescale: f.colorscale == "Greens" ? true : false
         }],
           {
             height: 520,
@@ -803,10 +804,12 @@ Use these numbers to understand stability, resilience, or long-term degradation.
         }
 
         const traces = [];
+        const colors = ["#1f77b4", "#2ca02c", "#9467bd", "#8c564b"];
 
         selectedPixels.forEach((p, idx) => {
           const r = p.r;
           const c = p.c;
+          const color = colors[idx % colors.length];
 
           const histY = [];
           const fcY = [];
@@ -831,7 +834,7 @@ Use these numbers to understand stability, resilience, or long-term degradation.
             y: histY,
             mode: "lines+markers",
             name: `(${r}, ${c}) – Historical`,
-            line: { dash: "solid" }
+            line: { dash: "solid", color: color }
           });
 
           traces.push({
@@ -839,7 +842,7 @@ Use these numbers to understand stability, resilience, or long-term degradation.
             y: fcY,
             mode: "lines+markers",
             name: `(${r}, ${c}) – Forecast`,
-            line: { dash: "dot" }
+            line: { dash: "dot", color: color }
           });
         });
 
@@ -859,6 +862,7 @@ Use these numbers to understand stability, resilience, or long-term degradation.
           z: frame,
           type: "heatmap",
           colorscale: "Greens",
+          reversescale: true,
           zmin: 0,
           zmax: 100
         }],
@@ -906,6 +910,7 @@ Use these numbers to understand stability, resilience, or long-term degradation.
             z: frame,
             type: "heatmap",
             colorscale: "Greens",
+            reversescale: true,
             zmin: 0,
             zmax: 100
           }],
