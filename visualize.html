@@ -505,7 +505,8 @@ Use these numbers to understand stability, resilience, or long-term degradation.
   • A <b>difference map</b> highlighting gains and losses<br><br>
 
   <b>Color meaning:</b><br>
-  • 🟩 Green → forest gain<br>
+  • 🟩 Green → forest cover<br>
+  • 🟦 Blue → forest gain<br>
   • 🟥 Red → forest loss<br>
   • ⬜ Neutral → little or no net change<br><br>
 
@@ -689,13 +690,18 @@ Use these numbers to understand stability, resilience, or long-term degradation.
 
       const start = tile.data[histIndices[0]];
       const end = tile.data[histIndices[histIndices.length - 1]];
-      const diff = start.map((row, i) => row.map((v, j) => clamp01(end[i][j] - v)));
+      const diff = start.map((row, i) => row.map((v, j) => end[i][j] - v));
+      const rows = start.length;
+      const cols = start[0].length;
+
+
+      const x = Array.from({ length: cols }, (_, i) => i + 0.5);
+      const y = Array.from({ length: rows }, (_, i) => i + 0.5);
 
       const framesTL = [
         { name: `Start (${years[histIndices[0]]})`, z: start, colorscale: "Greens" },
         { name: `End (${years[histIndices[histIndices.length - 1]]})`, z: end, colorscale: "Greens" },
-        { name: `Difference`, z: diff, colorscale: "Reds" }
-      ];
+        { name: `Difference`, z: diff, colorscale: [[0.0, "red"],[0.5, "white"],[1.0, "blue"] ], zmin: -50,zmax: 50}];
 
       const tlEls = [
         document.getElementById("tlFrame1"),
@@ -706,14 +712,18 @@ Use these numbers to understand stability, resilience, or long-term degradation.
       framesTL.forEach((f, i) => {
         Plotly.newPlot(tlEls[i], [{
           z: f.z,
+          x: x,
+          y: y,
           type: "heatmap",
           colorscale: f.colorscale,
-          reversescale: f.colorscale == "Greens" ? true : false
+          reversescale: f.colorscale == "Greens" ? true : false,
+          zmin: f.zmin !== undefined ? f.zmin : undefined,
+          zmax: f.zmax !== undefined ? f.zmax : undefined
         }],
           {
             height: 520,
             margin: { t: 40, l: 40, r: 40, b: 40 },
-            xaxis: { scaleanchor: "y" },
+            xaxis: { scaleanchor: "y", constrain: "domain" },
             yaxis: { autorange: "reversed" }
           });
       });
