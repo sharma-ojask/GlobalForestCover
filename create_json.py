@@ -10,8 +10,8 @@ from AdaptiveAutoRegForecaster import AdaptiveAutoRegForecaster
 # -------------------------------
 # CONFIG
 # -------------------------------
-input_folder = "/Users/ashantiboone/Desktop/Fall 2025/CSE 6242/Team IOTAS/cse6242-Team-Iotas/data/tiles_csv"
-output_json = "/Users/ashantiboone/Desktop/Fall 2025/CSE 6242/Team IOTAS/cse6242-Team-Iotas/working_code/data/processed_tiles_with_forecast.json"
+input_folder = "data/tiles_csv"
+output_json = "data/processed_tiles_with_forecast.json"
 target_resolution = 100  # downsample to 100×100
 
 # -------------------------------

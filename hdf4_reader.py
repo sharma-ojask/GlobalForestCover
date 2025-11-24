@@ -10,33 +10,44 @@ os.makedirs(output_folder, exist_ok=True)
 
 start_year = 2000
 
-for file in sorted(os.listdir(input_folder)):
-    if not file.endswith(".hdf"):
+# loop through subfolders
+for folder in sorted(os.listdir(input_folder)):
+    folder_path = os.path.join(input_folder, folder)
+    if not os.path.isdir(folder_path):
         continue
 
-    # Extract tile name (e.g., h13v03)
-    tile_match = re.search(r'h\d{2}v\d{2}', file)
-    tile_name = tile_match.group(0) if tile_match else os.path.splitext(file)[0]
+    hdf_files = sorted([f for f in os.listdir(folder_path) if f.endswith(".hdf")])
+    if not hdf_files:
+        continue
 
+    tile_name = folder
     output_csv = os.path.join(output_folder, f"{tile_name}.csv")
 
-    hdf = SD(os.path.join(input_folder, file), SDC.READ)
-    data = hdf.select("Percent_Tree_Cover")[:]
-    hdf.end()
+    # initialize stacked time-series
+    data_layers = []
+    years = []
 
-    # Mask invalid values
-    data = np.where((data > 100) | (data < 0), np.nan, data)
+    for i, file in enumerate(hdf_files):
+        year = start_year + i
+        hdf = SD(os.path.join(folder_path, file), SDC.READ)
+        arr = hdf.select("Percent_Tree_Cover")[:]
+        hdf.end()
 
-    # Convert to long format
-    rows, cols = np.where(~np.isnan(data))
+        arr = np.where((arr > 100) | (arr < 0), np.nan, arr)
+        data_layers.append(arr)
+        years.append(str(year))
+
+    data_layers = np.array(data_layers)
+
+    # convert to long format
+    rows, cols = np.where(~np.isnan(data_layers[0]))
     xs, ys = cols, rows
-    values = data[rows, cols]
 
-    df = pd.DataFrame({
-        "x": xs,
-        "y": ys,
-        str(start_year): values
-    })
+    data_dict = {"x": xs, "y": ys}
+    for i, year in enumerate(years):
+        data_dict[year] = data_layers[i, ys, xs]
 
+    df = pd.DataFrame(data_dict)
     df.to_csv(output_csv, index=False)
+
     print(f"Saved {output_csv}")
