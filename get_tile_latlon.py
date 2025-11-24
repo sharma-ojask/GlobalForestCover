@@ -70,7 +70,7 @@ def get_tile_boundaries(hdf_path):
         return None
 
 def main():
-    base_dir = "submission_data"
+    base_dir = "data"
     output_file = "tile_latlon.json"
     
     tile_data = {}
