@@ -28,15 +28,10 @@ The repo includes
   
 Optional: Full Data Processing Pipeline (to generate from scratch)
 
-a. Download the MODIS Percent Tree Cover Data from https://www.earthdata.nasa.gov/data/catalog/lpcloud-mod44b-061
- into the data folder as hdf files.
+- Download the MODIS Percent Tree Cover Data from https://www.earthdata.nasa.gov/data/catalog/lpcloud-mod44b-061 (enter e.g. '\*h19v03\*' in Granule ID(s) box to get the whole timerange for the selected tile as you pick it) into the data folder as hdf files (Save HDF files into the data folder with subfolders created for each MODIS tile (e.g., data/h17v07). Each subfolder should contain all HDF files for that tile across the full time range.).
+- Run process_final.py `python process_final.py` (this will generate data/process_tile_with_forecast.json with future forecast with Auto Regression model too)
+- Run get_tile_latlon.py `python get_tile_latlon.py` to obtain each tile's (latitude, longitude) information from the downloaded MODIS hdf4 files
 
-Remember to use the h[HH]v[VV] regex to target a given location, adding stars to the front and end to get the whole timerange for the selected tile as you pick it.
-
-Save HDF files into the data folder with subfolders created for each MODIS tile (e.g., data/h17v07). Each subfolder should contain all HDF files for that tile across the full time range.
-
-
-b. Run get_tile_latlon.py python get_tile_latlon.py to obtain each tile's (latitude, longitude) information from the downloaded MODIS hdf4 files.
 
 3. **Execution**
 To launch the visualization:
