@@ -35,11 +35,8 @@ Remember to use the h[HH]v[VV] regex to target a given location, adding stars to
 
 Save HDF files into the data folder with subfolders created for each MODIS tile (e.g., data/h17v07). Each subfolder should contain all HDF files for that tile across the full time range.
 
-b. Run hdf4_reader.py python hdf4_reader.py to convert hdf4 tree cover data into csv format.
 
-c. Run create_json.py python create_json.py to convert the csv data in the previous step to json format. This step augments the historical data with prediction data using our Adaptive Auto Regressive Model.
-
-d. Run get_tile_latlon.py python get_tile_latlon.py to obtain each tile's (latitude, longitude) information from the downloaded MODIS hdf4 files.
+b. Run get_tile_latlon.py python get_tile_latlon.py to obtain each tile's (latitude, longitude) information from the downloaded MODIS hdf4 files.
 
 3. **Execution**
 To launch the visualization:
